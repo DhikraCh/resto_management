@@ -1,24 +1,24 @@
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\view\RestaurantView.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\view\RegisterView.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\menu\MenuIt.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\payment\PaymentStrategy.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\view\AdminView.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\view\LoginView.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\view\WelcomeView.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\menu\MenuCategory.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\controller\RestaurantController.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\payment\MobilePaymentStrategy.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\OrdersManager.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\payment\CashPaymentStrategy.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\order\Order.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\AdminManager.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\observer\OrderSubject.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\observer\OrderObserver.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\RestaurantSystem.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\RestaurantApp.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\menu\MenuComponent.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\observer\KitchenObserver.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\payment\OnsitePaymentStrategy.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\payment\CardPaymentStrategy.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\UserSession.java
-C:\Users\dhikra Ch\Desktop\restaurant-system - Copie - Copie - Copie\src\main\java\com\restaurant\model\order\OrderItem.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\RestaurantSystem.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\order\OrderItem.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\OrdersManager.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\view\RestaurantView.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\RestaurantApp.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\view\AdminView.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\observer\OrderSubject.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\payment\CardPaymentStrategy.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\menu\MenuCategory.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\menu\MenuComponent.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\payment\OnsitePaymentStrategy.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\UserSession.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\view\WelcomeView.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\AdminManager.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\view\LoginView.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\payment\CashPaymentStrategy.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\menu\MenuIt.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\payment\PaymentStrategy.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\order\Order.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\view\RegisterView.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\controller\RestaurantController.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\observer\KitchenObserver.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\observer\OrderObserver.java
+C:\Users\dhikra Ch\Desktop\resto_management\src\main\java\com\restaurant\model\payment\MobilePaymentStrategy.java

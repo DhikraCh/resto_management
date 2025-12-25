@@ -22,14 +22,6 @@ public class WelcomeView {
     }
 
     public void show() {
-        // Vérifier si un admin est déjà connecté
-        if (com.restaurant.model.UserSession.getInstance().isAdmin()) {
-            // Rediriger automatiquement vers AdminView
-            System.out.println("🔄 Admin déjà connecté, redirection vers dashboard...");
-            new AdminView(stage).show();
-            return;
-        }
-
         VBox root = new VBox(30);
         root.setAlignment(Pos.CENTER);
         root.setPadding(new Insets(50));
@@ -56,6 +48,9 @@ public class WelcomeView {
                 "-fx-background-radius: 15; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 20, 0, 0, 5);");
 
+        // Vérifier si admin déjà connecté
+        boolean isAdminConnected = com.restaurant.model.UserSession.getInstance().isAdmin();
+
         // Bouton Admin
         Button adminButton = new Button("👨‍💼 ESPACE ADMINISTRATEUR");
         adminButton.setPrefWidth(350);
@@ -63,7 +58,13 @@ public class WelcomeView {
         adminButton.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; " +
                 "-fx-background-color: #2c3e50; -fx-text-fill: white; " +
                 "-fx-background-radius: 10; -fx-cursor: hand;");
-        adminButton.setOnAction(e -> showAdminOptions());
+
+        // Si admin connecté, aller direct au dashboard, sinon montrer options
+        if (isAdminConnected) {
+            adminButton.setOnAction(e -> new AdminView(stage).show());
+        } else {
+            adminButton.setOnAction(e -> showAdminOptions());
+        }
 
         // Bouton Invité
         Button guestButton = new Button("🛒 CONTINUER EN TANT QU'INVITÉ");
@@ -74,13 +75,31 @@ public class WelcomeView {
                 "-fx-background-radius: 10; -fx-cursor: hand;");
         guestButton.setOnAction(e -> loginAsGuest());
 
-        Label infoLabel = new Label("💡 Les invités peuvent passer des commandes\n" +
-                "Les admins ont accès aux statistiques");
-        infoLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
-        infoLabel.setTextFill(Color.web("#7f8c8d"));
-        infoLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        // Message si admin connecté
+        VBox infoBox = new VBox(10);
+        infoBox.setAlignment(Pos.CENTER);
 
-        buttonsBox.getChildren().addAll(adminButton, guestButton, infoLabel);
+        if (isAdminConnected) {
+            Label connectedLabel = new Label("✅ Administrateur connecté");
+            connectedLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+            connectedLabel.setTextFill(Color.web("#27ae60"));
+
+            Label emailLabel = new Label(com.restaurant.model.UserSession.getInstance().getCurrentAdminEmail());
+            emailLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+            emailLabel.setTextFill(Color.web("#7f8c8d"));
+
+            infoBox.getChildren().addAll(connectedLabel, emailLabel);
+        } else {
+            Label infoLabel = new Label("💡 Les invités peuvent passer des commandes\n" +
+                    "Les admins ont accès aux statistiques");
+            infoLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+            infoLabel.setTextFill(Color.web("#7f8c8d"));
+            infoLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+            infoBox.getChildren().add(infoLabel);
+        }
+
+        buttonsBox.getChildren().addAll(adminButton, guestButton, infoBox);
 
         root.getChildren().addAll(logo, title, subtitle, buttonsBox);
 
