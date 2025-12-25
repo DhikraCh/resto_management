@@ -2,6 +2,7 @@ package com.restaurant.model.order;
 
 import com.restaurant.model.menu.MenuIt;
 import com.restaurant.model.payment.PaymentStrategy;
+import com.restaurant.model.payment.OnsitePaymentStrategy;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -82,6 +83,16 @@ public class Order {
     public String getFormattedTime() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         return orderTime.format(formatter);
+    }
+
+    // --- Méthodes ajoutées pour résoudre les erreurs de compilation ---
+    public String getPaymentMethod() {
+        if (paymentStrategy == null) return "Aucune";
+        return paymentStrategy.getPaymentMethod();
+    }
+
+    public boolean isOnsitePayment() {
+        return paymentStrategy instanceof OnsitePaymentStrategy;
     }
 
     @Override

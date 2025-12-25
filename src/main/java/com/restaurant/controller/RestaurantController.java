@@ -1,9 +1,7 @@
 package com.restaurant.controller;
 
 import com.restaurant.model.RestaurantSystem;
-import com.restaurant.model.menu.MenuIt;
-import com.restaurant.model.menu.MenuComponent;
-import com.restaurant.model.menu.MenuCategory;
+import com.restaurant.model.menu.*;
 import com.restaurant.model.order.Order;
 import com.restaurant.model.payment.*;
 import java.util.ArrayList;
@@ -11,6 +9,7 @@ import java.util.List;
 
 /**
  * CONTRÔLEUR MVC - Gère la logique métier
+ * Fait le lien entre le modèle (RestaurantSystem) et la vue
  */
 public class RestaurantController {
     private RestaurantSystem system;
@@ -77,6 +76,9 @@ public class RestaurantController {
                 break;
             case "MOBILE":
                 strategy = new MobilePaymentStrategy(details);
+                break;
+            case "ONSITE":
+                strategy = new OnsitePaymentStrategy();
                 break;
             default:
                 System.out.println("❌ Méthode de paiement inconnue");

@@ -1,0 +1,14 @@
+ORDER:1000|25/12/2025 02:22|3750.0|true
+ITEM:Tajine|900.0|3
+ITEM:Makroud|350.0|3
+---
+ORDER:1001|25/12/2025 02:24|3600.0|true
+ITEM:Zlabia|300.0|6
+ITEM:Zlabia|300.0|6
+---
+ORDER:1002|25/12/2025 02:26|1050.0|true
+ITEM:Thé à la menthe|150.0|7
+---
+ORDER:1003|25/12/2025 03:01|900.0|true|Paiement sur place
+ITEM:Tajine|900.0|1
+---

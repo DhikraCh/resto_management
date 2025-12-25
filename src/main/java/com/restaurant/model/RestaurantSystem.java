@@ -1,8 +1,6 @@
 package com.restaurant.model;
 
-import com.restaurant.model.menu.MenuIt;
-import com.restaurant.model.menu.MenuCategory;
-import com.restaurant.model.menu.MenuComponent;
+import com.restaurant.model.menu.*;
 import com.restaurant.model.order.Order;
 import com.restaurant.model.notification.*;
 import java.util.ArrayList;
@@ -10,6 +8,7 @@ import java.util.List;
 
 /**
  * PATRON SINGLETON - Gestion centralisée du système de restaurant
+ * Une seule instance pour gérer menus, commandes et notifications
  */
 public class RestaurantSystem {
     private static RestaurantSystem instance;
@@ -23,6 +22,7 @@ public class RestaurantSystem {
         orderSubject = new OrderSubject();
         initializeMenu();
         initializeObservers();
+        loadOrders(); // Charger les commandes sauvegardées
     }
 
     public static RestaurantSystem getInstance() {
@@ -77,6 +77,7 @@ public class RestaurantSystem {
 
     public void addOrder(Order order) {
         orders.add(order);
+        OrdersManager.getInstance().appendOrder(order);
     }
 
     public void notifyOrderValidated(Order order) {
@@ -87,6 +88,12 @@ public class RestaurantSystem {
         return new ArrayList<>(orders);
     }
 
+    private void loadOrders() {
+        List<Order> savedOrders = OrdersManager.getInstance().loadOrders();
+        orders.addAll(savedOrders);
+        System.out.println("📦 " + savedOrders.size() + " commande(s) restaurée(s)");
+    }
+
     public void displayMenu() {
         System.out.println("\n═══════════════════════════════════════");
         System.out.println("         MENU DU RESTAURANT");
@@ -95,3 +102,4 @@ public class RestaurantSystem {
         System.out.println("\n═══════════════════════════════════════\n");
     }
 }
+
