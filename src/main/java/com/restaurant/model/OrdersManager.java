@@ -40,11 +40,16 @@ public class OrdersManager {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(ORDERS_FILE))) {
             for (Order order : orders) {
                 if (order.isPaid()) {
-                    // Format: ORDER_ID|DATE|TOTAL|PAID|PAYMENT_METHOD
+                    // Format: ORDER_ID|DATE|TOTAL|PAID|PAYMENT_METHOD|STATUS|PROCESSED_TIME
+                    String processedTime = order.getProcessedTime() != null ?
+                            order.getProcessedTime().format(DATE_FORMATTER) : "";
+
                     writer.write("ORDER:" + order.getOrderId() + "|" +
                             order.getOrderTime().format(DATE_FORMATTER) + "|" +
                             order.getTotal() + "|" + order.isPaid() + "|" +
-                            order.getPaymentMethod());
+                            order.getPaymentMethod() + "|" +
+                            order.getStatus().name() + "|" +
+                            processedTime);
                     writer.newLine();
 
                     // Items: ITEM|NAME|PRICE|QUANTITY
@@ -86,8 +91,32 @@ public class OrdersManager {
                     // Créer nouvelle commande
                     String[] parts = line.substring(6).split("\\|");
                     currentOrder = new Order();
-                    // On ne peut pas restaurer complètement car Order génère son propre ID
-                    // Mais on garde la structure pour l'affichage
+
+                    // Restaurer le paymentMethod si disponible (index 4)
+                    if (parts.length > 4 && !parts[4].isEmpty()) {
+                        currentOrder.setPaymentMethod(parts[4]);
+                    }
+
+                    // Restaurer le status si disponible (index 5)
+                    if (parts.length > 5 && !parts[5].isEmpty()) {
+                        try {
+                            Order.OrderStatus status = Order.OrderStatus.valueOf(parts[5]);
+                            currentOrder.setStatus(status);
+                        } catch (IllegalArgumentException e) {
+                            // Si le statut est invalide, garder PENDING par défaut
+                        }
+                    }
+
+                    // Restaurer processedTime si disponible (index 6)
+                    if (parts.length > 6 && !parts[6].isEmpty()) {
+                        try {
+                            LocalDateTime processedTime = LocalDateTime.parse(parts[6], DATE_FORMATTER);
+                            currentOrder.setProcessedTime(processedTime);
+                        } catch (Exception e) {
+                            // Si erreur de parsing, ignorer
+                        }
+                    }
+
                     orders.add(currentOrder);
 
                 } else if (line.startsWith("ITEM:") && currentOrder != null) {
@@ -130,11 +159,16 @@ public class OrdersManager {
         }
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(ORDERS_FILE, true))) {
-            // Format: ORDER_ID|DATE|TOTAL|PAID|PAYMENT_METHOD
+            // Format: ORDER_ID|DATE|TOTAL|PAID|PAYMENT_METHOD|STATUS|PROCESSED_TIME
+            String processedTime = order.getProcessedTime() != null ?
+                    order.getProcessedTime().format(DATE_FORMATTER) : "";
+
             writer.write("ORDER:" + order.getOrderId() + "|" +
                     order.getOrderTime().format(DATE_FORMATTER) + "|" +
                     order.getTotal() + "|" + order.isPaid() + "|" +
-                    order.getPaymentMethod());
+                    order.getPaymentMethod() + "|" +
+                    order.getStatus().name() + "|" +
+                    processedTime);
             writer.newLine();
 
             // Items

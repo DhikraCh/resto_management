@@ -2,7 +2,6 @@ package com.restaurant.model.order;
 
 import com.restaurant.model.menu.MenuIt;
 import com.restaurant.model.payment.PaymentStrategy;
-import com.restaurant.model.payment.OnsitePaymentStrategy;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -13,19 +12,31 @@ import java.util.List;
  * Intègre la stratégie de paiement (PATRON STRATÉGIE)
  */
 public class Order {
+    public enum OrderStatus {
+        PENDING,    // En attente
+        VALIDATED,  // Validée
+        DELIVERED   // En livraison
+    }
+
     private static int orderCounter = 1000;
 
     private int orderId;
     private List<OrderItem> items;
     private LocalDateTime orderTime;
+    private LocalDateTime processedTime;
     private PaymentStrategy paymentStrategy;
     private boolean isPaid;
+    private String paymentMethod; // "PAID" ou "ONSITE"
+    private OrderStatus status;
 
     public Order() {
         this.orderId = orderCounter++;
         this.items = new ArrayList<>();
         this.orderTime = LocalDateTime.now();
+        this.processedTime = null;
         this.isPaid = false;
+        this.paymentMethod = "";
+        this.status = OrderStatus.PENDING;
     }
 
     public void addItem(MenuIt menuItem, int quantity) {
@@ -61,9 +72,31 @@ public class Order {
         }
 
         isPaid = paymentStrategy.pay(getTotal());
+
+        // Déterminer le type de paiement
+        String methodName = paymentStrategy.getPaymentMethod();
+        if (methodName.contains("sur place")) {
+            paymentMethod = "ONSITE";
+        } else {
+            paymentMethod = "PAID";
+        }
+
         return isPaid;
     }
 
+    // Marquer comme validée
+    public void validate() {
+        this.status = OrderStatus.VALIDATED;
+        this.processedTime = LocalDateTime.now();
+    }
+
+    // Marquer comme en livraison
+    public void assignDelivery() {
+        this.status = OrderStatus.DELIVERED;
+        this.processedTime = LocalDateTime.now();
+    }
+
+    // Getters
     public int getOrderId() {
         return orderId;
     }
@@ -76,8 +109,57 @@ public class Order {
         return orderTime;
     }
 
+    public LocalDateTime getProcessedTime() {
+        return processedTime;
+    }
+
+    public void setProcessedTime(LocalDateTime time) {
+        this.processedTime = time;
+    }
+
     public boolean isPaid() {
         return isPaid;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String method) {
+        this.paymentMethod = method;
+    }
+
+    public boolean isOnsitePayment() {
+        return "ONSITE".equals(paymentMethod);
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
+
+    public boolean isPending() {
+        return status == OrderStatus.PENDING;
+    }
+
+    public boolean isValidated() {
+        return status == OrderStatus.VALIDATED;
+    }
+
+    public boolean isDelivered() {
+        return status == OrderStatus.DELIVERED;
+    }
+
+    public String getStatusText() {
+        switch (status) {
+            case PENDING: return "⏳ EN ATTENTE";
+            case VALIDATED: return "✅ VALIDÉE";
+            case DELIVERED: return "🚚 EN LIVRAISON";
+            default: return "❓ INCONNU";
+        }
     }
 
     public String getFormattedTime() {
@@ -85,14 +167,10 @@ public class Order {
         return orderTime.format(formatter);
     }
 
-    // --- Méthodes ajoutées pour résoudre les erreurs de compilation ---
-    public String getPaymentMethod() {
-        if (paymentStrategy == null) return "Aucune";
-        return paymentStrategy.getPaymentMethod();
-    }
-
-    public boolean isOnsitePayment() {
-        return paymentStrategy instanceof OnsitePaymentStrategy;
+    public String getFormattedProcessedTime() {
+        if (processedTime == null) return "-";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        return processedTime.format(formatter);
     }
 
     @Override
@@ -102,10 +180,16 @@ public class Order {
         for (OrderItem item : items) {
             sb.append("  ").append(item.toString()).append("\n");
         }
-        sb.append("Total: ").append(getTotal()).append(" DA");
-        if (isPaid) {
-            sb.append(" [PAYÉ]");
+        sb.append("Total: ").append(getTotal()).append(" DA ");
+
+        if (isOnsitePayment()) {
+            sb.append("[À PAYER SUR PLACE] ");
+        } else if (isPaid) {
+            sb.append("[PAYÉ] ");
         }
+
+        sb.append(getStatusText());
+
         return sb.toString();
     }
 }

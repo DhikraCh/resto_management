@@ -2,6 +2,7 @@ package com.restaurant.view;
 
 import com.restaurant.model.RestaurantSystem;
 import com.restaurant.model.UserSession;
+import com.restaurant.model.OrdersManager;
 import com.restaurant.model.order.Order;
 import com.restaurant.model.order.OrderItem;
 import javafx.geometry.Insets;
@@ -16,16 +17,19 @@ import javafx.stage.Stage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
- * VUE - Dashboard administrateur
+ * VUE - Dashboard administrateur avec gestion des commandes
  */
 public class AdminView {
     private Stage stage;
-    private ListView<String> ordersListView;
+    private ListView<HBox> pendingOrdersListView;
+    private ListView<String> historyListView;
     private Label totalSalesLabel;
     private Label ordersCountLabel;
     private Label popularDishLabel;
+    private Label pendingCountLabel;
 
     public AdminView(Stage stage) {
         this.stage = stage;
@@ -39,12 +43,13 @@ public class AdminView {
         root.setTop(createHeader());
         root.setCenter(createMainContent());
 
-        Scene scene = new Scene(root, 1000, 650);
+        Scene scene = new Scene(root, 1400, 750);
         stage.setTitle("Dashboard Administrateur");
         stage.setScene(scene);
         stage.show();
 
         loadStatistics();
+        loadOrders();
     }
 
     private VBox createHeader() {
@@ -76,30 +81,25 @@ public class AdminView {
         emailLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
         emailLabel.setTextFill(Color.web("#ecf0f1"));
 
+        Button refreshButton = new Button("🔄 Actualiser");
+        refreshButton.setStyle("-fx-font-size: 13px; " +
+                "-fx-background-color: #F7931E; -fx-text-fill: white; " +
+                "-fx-background-radius: 5; -fx-cursor: hand;");
+        refreshButton.setOnAction(e -> {
+            loadStatistics();
+            loadOrders();
+        });
+
         Button logoutButton = new Button("🚪 Déconnexion");
         logoutButton.setStyle("-fx-font-size: 13px; " +
                 "-fx-background-color: #e74c3c; -fx-text-fill: white; " +
                 "-fx-background-radius: 5; -fx-cursor: hand;");
         logoutButton.setOnAction(e -> logout());
 
-        titleBox.getChildren().addAll(backButton, spacer1, title, spacer2, emailLabel, logoutButton);
+        titleBox.getChildren().addAll(backButton, spacer1, title, spacer2, emailLabel, refreshButton, logoutButton);
         header.getChildren().add(titleBox);
 
         return header;
-    }
-
-    private void handleBackToWelcome() {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation");
-        confirm.setHeaderText("Retour à l'accueil");
-        confirm.setContentText("Voulez-vous vraiment revenir à l'accueil ?\n\nVous resterez connecté.");
-
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                // NE PAS déconnecter - juste retourner
-                new WelcomeView(stage).show();
-            }
-        });
     }
 
     private HBox createMainContent() {
@@ -108,7 +108,8 @@ public class AdminView {
 
         mainContent.getChildren().addAll(
                 createStatisticsPanel(),
-                createOrdersPanel()
+                createPendingOrdersPanel(),
+                createHistoryPanel()
         );
 
         return mainContent;
@@ -116,53 +117,49 @@ public class AdminView {
 
     private VBox createStatisticsPanel() {
         VBox panel = new VBox(15);
-        panel.setPrefWidth(350);
+        panel.setPrefWidth(280);
         panel.setPadding(new Insets(20));
         panel.setStyle("-fx-background-color: white; " +
                 "-fx-background-radius: 10; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
 
         Label title = new Label("📊 STATISTIQUES");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         title.setTextFill(Color.web("#2c3e50"));
 
+        // En attente
+        VBox pendingBox = createStatBox("⏳ En Attente", "0", "#F7931E");
+        pendingCountLabel = (Label) ((VBox) pendingBox.getChildren().get(1)).getChildren().get(0);
+
         // Total ventes
-        VBox salesBox = createStatBox("💰 Total des Ventes", "0.00 DA", "#27ae60");
+        VBox salesBox = createStatBox("💰 Total Ventes", "0.00 DA", "#27ae60");
         totalSalesLabel = (Label) ((VBox) salesBox.getChildren().get(1)).getChildren().get(0);
 
         // Nombre commandes
-        VBox ordersBox = createStatBox("📦 Nombre de Commandes", "0", "#3498db");
+        VBox ordersBox = createStatBox("📦 Commandes", "0", "#3498db");
         ordersCountLabel = (Label) ((VBox) ordersBox.getChildren().get(1)).getChildren().get(0);
 
         // Plat populaire
-        VBox dishBox = createStatBox("🏆 Plat le Plus Populaire", "Aucun", "#e74c3c");
+        VBox dishBox = createStatBox("🏆 Plus Populaire", "Aucun", "#e74c3c");
         popularDishLabel = (Label) ((VBox) dishBox.getChildren().get(1)).getChildren().get(0);
 
-        Button refreshButton = new Button("🔄 Actualiser");
-        refreshButton.setPrefWidth(310);
-        refreshButton.setPrefHeight(40);
-        refreshButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; " +
-                "-fx-background-color: #F7931E; -fx-text-fill: white; " +
-                "-fx-background-radius: 5; -fx-cursor: hand;");
-        refreshButton.setOnAction(e -> loadStatistics());
-
-        panel.getChildren().addAll(title, salesBox, ordersBox, dishBox, refreshButton);
+        panel.getChildren().addAll(title, pendingBox, salesBox, ordersBox, dishBox);
         return panel;
     }
 
     private VBox createStatBox(String label, String value, String color) {
         VBox box = new VBox(10);
-        box.setPadding(new Insets(15));
+        box.setPadding(new Insets(12));
         box.setStyle("-fx-background-color: " + color + "; " +
                 "-fx-background-radius: 8;");
 
         Label labelText = new Label(label);
-        labelText.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        labelText.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         labelText.setTextFill(Color.WHITE);
 
         VBox valueBox = new VBox();
         Label valueText = new Label(value);
-        valueText.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        valueText.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         valueText.setTextFill(Color.WHITE);
         valueBox.getChildren().add(valueText);
 
@@ -170,29 +167,52 @@ public class AdminView {
         return box;
     }
 
-    private VBox createOrdersPanel() {
+    private VBox createPendingOrdersPanel() {
         VBox panel = new VBox(15);
-        panel.setPrefWidth(600);
+        panel.setPrefWidth(520);
         panel.setPadding(new Insets(20));
         panel.setStyle("-fx-background-color: white; " +
                 "-fx-background-radius: 10; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
 
-        Label title = new Label("📋 HISTORIQUE DES COMMANDES");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        Label title = new Label("⏳ COMMANDES EN ATTENTE");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        title.setTextFill(Color.web("#F7931E"));
+
+        pendingOrdersListView = new ListView<>();
+        pendingOrdersListView.setPrefHeight(600);
+        pendingOrdersListView.setStyle("-fx-font-size: 12px;");
+
+        panel.getChildren().addAll(title, pendingOrdersListView);
+        return panel;
+    }
+
+    private VBox createHistoryPanel() {
+        VBox panel = new VBox(15);
+        panel.setPrefWidth(520);
+        panel.setPadding(new Insets(20));
+        panel.setStyle("-fx-background-color: white; " +
+                "-fx-background-radius: 10; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+
+        Label title = new Label("📚 HISTORIQUE COMPLET");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         title.setTextFill(Color.web("#2c3e50"));
 
-        ordersListView = new ListView<>();
-        ordersListView.setPrefHeight(450);
-        ordersListView.setStyle("-fx-font-size: 13px; -fx-font-family: 'Courier New';");
+        historyListView = new ListView<>();
+        historyListView.setPrefHeight(600);
+        historyListView.setStyle("-fx-font-size: 11px; -fx-font-family: 'Courier New';");
 
-        panel.getChildren().addAll(title, ordersListView);
+        panel.getChildren().addAll(title, historyListView);
         return panel;
     }
 
     private void loadStatistics() {
         RestaurantSystem system = RestaurantSystem.getInstance();
         List<Order> orders = system.getOrders();
+
+        // Compter en attente
+        long pendingCount = orders.stream().filter(Order::isPending).count();
 
         // Calculer total ventes
         double totalSales = orders.stream()
@@ -226,27 +246,123 @@ public class AdminView {
         }
 
         // Mettre à jour les labels
-        totalSalesLabel.setText(String.format("%.2f DA", totalSales));
+        pendingCountLabel.setText(String.valueOf(pendingCount));
+        totalSalesLabel.setText(String.format("%.0f DA", totalSales));
         ordersCountLabel.setText(String.valueOf(ordersCount));
         popularDishLabel.setText(popularDish);
+    }
 
-        // Charger la liste des commandes
-        ordersListView.getItems().clear();
-        if (orders.isEmpty()) {
-            ordersListView.getItems().add("Aucune commande pour le moment");
+    private void loadOrders() {
+        RestaurantSystem system = RestaurantSystem.getInstance();
+        List<Order> allOrders = system.getOrders();
+
+        // Commandes en attente
+        List<Order> pendingOrders = allOrders.stream()
+                .filter(Order::isPending)
+                .collect(Collectors.toList());
+
+        pendingOrdersListView.getItems().clear();
+
+        if (pendingOrders.isEmpty()) {
+            Label emptyLabel = new Label("Aucune commande en attente");
+            emptyLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-style: italic;");
+            HBox emptyBox = new HBox(emptyLabel);
+            emptyBox.setAlignment(Pos.CENTER);
+            emptyBox.setPadding(new Insets(20));
+            pendingOrdersListView.getItems().add(emptyBox);
         } else {
-            for (Order order : orders) {
+            for (Order order : pendingOrders) {
+                pendingOrdersListView.getItems().add(createPendingOrderBox(order));
+            }
+        }
+
+        // Historique complet
+        historyListView.getItems().clear();
+
+        if (allOrders.isEmpty()) {
+            historyListView.getItems().add("Aucune commande pour le moment");
+        } else {
+            for (Order order : allOrders) {
                 if (order.isPaid()) {
-                    ordersListView.getItems().add(formatOrder(order));
-                    ordersListView.getItems().add("─────────────────────────────────");
+                    historyListView.getItems().add(formatHistoryOrder(order));
+                    historyListView.getItems().add("─────────────────────────────────────");
                 }
             }
         }
     }
 
-    private String formatOrder(Order order) {
+    private HBox createPendingOrderBox(Order order) {
+        VBox orderInfo = new VBox(8);
+        orderInfo.setPadding(new Insets(12));
+        orderInfo.setStyle("-fx-background-color: #fff8dc; " +
+                "-fx-background-radius: 8; " +
+                "-fx-border-color: #F7931E; " +
+                "-fx-border-width: 2; " +
+                "-fx-border-radius: 8;");
+
+        // Header
+        Label headerLabel = new Label("⏳ Commande #" + order.getOrderId() + " | " + order.getFormattedTime());
+        headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        headerLabel.setTextFill(Color.web("#F7931E"));
+
+        // Items
+        VBox itemsBox = new VBox(3);
+        for (OrderItem item : order.getItems()) {
+            Label itemLabel = new Label("  • " + item.getQuantity() + "x " +
+                    item.getMenuItem().getName() + " - " +
+                    item.getSubtotal() + " DA");
+            itemLabel.setFont(Font.font("Arial", 11));
+            itemsBox.getChildren().add(itemLabel);
+        }
+
+        // Total et paiement
+        String paymentInfo = order.isOnsitePayment() ? "[À PAYER SUR PLACE]" : "[PAYÉ]";
+        Label totalLabel = new Label("TOTAL: " + order.getTotal() + " DA " + paymentInfo);
+        totalLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        totalLabel.setTextFill(Color.web("#2c3e50"));
+
+        // Boutons d'action selon le type de paiement
+        HBox buttonsBox = new HBox(10);
+        buttonsBox.setAlignment(Pos.CENTER);
+        buttonsBox.setPadding(new Insets(5, 0, 0, 0));
+
+        if (order.isOnsitePayment()) {
+            // SUR PLACE : Seulement bouton VALIDER
+            Button validateButton = new Button("✅ Valider (prêt à récupérer)");
+            validateButton.setStyle("-fx-font-size: 11px; -fx-background-color: #27ae60; " +
+                    "-fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;");
+            validateButton.setPrefWidth(220);
+            validateButton.setOnAction(e -> handleValidateOrder(order));
+            buttonsBox.getChildren().add(validateButton);
+        } else {
+            // ESPÈCES ou CARTE : Seulement bouton LIVRAISON
+            Button deliverButton = new Button("🚚 Assigner à la Livraison");
+            deliverButton.setStyle("-fx-font-size: 11px; -fx-background-color: #3498db; " +
+                    "-fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;");
+            deliverButton.setPrefWidth(220);
+            deliverButton.setOnAction(e -> handleDeliverOrder(order));
+            buttonsBox.getChildren().add(deliverButton);
+        }
+
+        orderInfo.getChildren().addAll(headerLabel, itemsBox, totalLabel, buttonsBox);
+
+        HBox container = new HBox(orderInfo);
+        container.setPadding(new Insets(5));
+        return container;
+    }
+
+    private String formatHistoryOrder(Order order) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Commande #").append(order.getOrderId())
+
+        // Status avec couleur
+        String statusIcon = "";
+        switch (order.getStatus()) {
+            case PENDING: statusIcon = "⏳"; break;
+            case VALIDATED: statusIcon = "✅"; break;
+            case DELIVERED: statusIcon = "🚚"; break;
+        }
+
+        sb.append(statusIcon).append(" Commande #").append(order.getOrderId())
                 .append(" | ").append(order.getFormattedTime()).append("\n");
 
         for (OrderItem item : order.getItems()) {
@@ -257,16 +373,71 @@ public class AdminView {
 
         sb.append("  TOTAL: ").append(order.getTotal()).append(" DA ");
 
-        // Afficher le statut selon le type de paiement
         if (order.isOnsitePayment()) {
-            sb.append("[À PAYER SUR PLACE]");
-        } else if (order.isPaid()) {
-            sb.append("[PAYÉ]");
+            sb.append("[À PAYER SUR PLACE] ");
         } else {
-            sb.append("[NON PAYÉ]");
+            sb.append("[PAYÉ] ");
+        }
+
+        sb.append(order.getStatusText());
+
+        if (order.getProcessedTime() != null) {
+            sb.append("\n  Traité le: ").append(order.getFormattedProcessedTime());
         }
 
         return sb.toString();
+    }
+
+    private void handleValidateOrder(Order order) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Valider la commande");
+        confirm.setHeaderText("Commande #" + order.getOrderId());
+        confirm.setContentText("Voulez-vous valider cette commande ?");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                order.validate();
+                // Sauvegarder les changements
+                OrdersManager.getInstance().saveOrders(RestaurantSystem.getInstance().getOrders());
+                // Rafraîchir l'affichage
+                loadStatistics();
+                loadOrders();
+                showSuccessAlert("Commande #" + order.getOrderId() + " validée avec succès !");
+            }
+        });
+    }
+
+    private void handleDeliverOrder(Order order) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Assigner à la livraison");
+        confirm.setHeaderText("Commande #" + order.getOrderId());
+        confirm.setContentText("Voulez-vous assigner cette commande à la livraison ?");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                order.assignDelivery();
+                // Sauvegarder les changements
+                OrdersManager.getInstance().saveOrders(RestaurantSystem.getInstance().getOrders());
+                // Rafraîchir l'affichage
+                loadStatistics();
+                loadOrders();
+                showSuccessAlert("Commande #" + order.getOrderId() + " assignée à la livraison !");
+            }
+        });
+    }
+
+    private void handleBackToWelcome() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmation");
+        confirm.setHeaderText("Retour à l'accueil");
+        confirm.setContentText("Voulez-vous vraiment revenir à l'accueil ?\n\nVous resterez connecté.");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                // NE PAS déconnecter - juste retourner
+                new WelcomeView(stage).show();
+            }
+        });
     }
 
     private void logout() {
@@ -280,5 +451,13 @@ public class AdminView {
                 new WelcomeView(stage).show();
             }
         });
+    }
+
+    private void showSuccessAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Succès");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
