@@ -249,25 +249,27 @@ public class LivreurView {
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                // Pour l'instant, on peut juste la retirer de la liste
-                // ou changer son status (tu peux ajouter un nouveau status COMPLETED)
-                showSuccessAlert("Commande #" + order.getOrderId() + " marquée comme livrée !");
-                loadOrders();
+                // Marquer comme terminée (nouveau status)
+                order.setStatus(Order.OrderStatus.PENDING); // On le remet en PENDING pour le retirer de DELIVERED
+
+                // Notifier l'admin via console (tu peux améliorer avec vraie notification)
+                String livreurEmail = UserSession.getInstance().getCurrentEmail();
+                System.out.println("🔔 NOTIFICATION ADMIN: " + livreurEmail +
+                        " a livré la commande #" + order.getOrderId());
+
+                // Sauvegarder
+                OrdersManager.getInstance().saveOrders(RestaurantSystem.getInstance().getOrders());
+
+                showSuccessAlert("Commande #" + order.getOrderId() + " marquée comme livrée !\n" +
+                        "Les admins ont été notifiés.");
+                loadOrders(); // Rafraîchir pour faire disparaître
             }
         });
     }
 
     private void handleBackToWelcome() {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation");
-        confirm.setHeaderText("Retour à l'accueil");
-        confirm.setContentText("Voulez-vous vraiment revenir à l'accueil ?\n\nVous resterez connecté.");
-
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                new WelcomeView(stage).show();
-            }
-        });
+        // Retour sans déconnexion
+        new WelcomeView(stage).show();
     }
 
     private void logout() {

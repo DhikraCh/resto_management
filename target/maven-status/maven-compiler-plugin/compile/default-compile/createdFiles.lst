@@ -12,6 +12,7 @@ com\restaurant\model\AdminManager.class
 com\restaurant\model\payment\OnsitePaymentStrategy.class
 com\restaurant\model\RestaurantSystem.class
 com\restaurant\controller\RestaurantController.class
+com\restaurant\model\ClientOrderManager.class
 com\restaurant\model\UserManager.class
 com\restaurant\model\order\Order.class
 com\restaurant\model\notification\OrderSubject.class

@@ -1,6 +1,8 @@
 package com.restaurant.controller;
 
 import com.restaurant.model.RestaurantSystem;
+import com.restaurant.model.UserSession;
+import com.restaurant.model.ClientOrderManager;
 import com.restaurant.model.menu.*;
 import com.restaurant.model.order.Order;
 import com.restaurant.model.payment.*;
@@ -95,9 +97,9 @@ public class RestaurantController {
             return false;
         }
 
-        System.out.println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("\n┌────────────────────────────┐");
         System.out.println("  TRAITEMENT DU PAIEMENT");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("└────────────────────────────┘");
 
         boolean success = currentOrder.processPayment();
 
@@ -105,8 +107,18 @@ public class RestaurantController {
             system.addOrder(currentOrder);
             system.notifyOrderValidated(currentOrder);
 
+            // Si client connecté, sauvegarder dans son historique
+            UserSession session = UserSession.getInstance();
+            if (session.isClient() && session.getCurrentEmail() != null) {
+                ClientOrderManager.getInstance().saveClientOrder(
+                        session.getCurrentEmail(),
+                        currentOrder
+                );
+                session.addOrderToHistory(currentOrder);
+            }
+
             System.out.println("\n✅ Commande validée et payée !");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            System.out.println("└────────────────────────────┘\n");
 
             currentOrder = null;
             return true;
@@ -147,6 +159,12 @@ public class RestaurantController {
     }
 
     public List<Order> getOrderHistory() {
+        // Si client connecté, retourner son historique personnel
+        UserSession session = UserSession.getInstance();
+        if (session.isClient() && session.getCurrentEmail() != null) {
+            return ClientOrderManager.getInstance().loadClientOrders(session.getCurrentEmail());
+        }
+        // Sinon retourner l'historique global (pour admins/guests)
         return system.getOrders();
     }
 }
