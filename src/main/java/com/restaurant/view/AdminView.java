@@ -1,8 +1,6 @@
 package com.restaurant.view;
 
-import com.restaurant.model.RestaurantSystem;
-import com.restaurant.model.UserSession;
-import com.restaurant.model.OrdersManager;
+import com.restaurant.model.*;
 import com.restaurant.model.order.Order;
 import com.restaurant.model.order.OrderItem;
 import javafx.geometry.Insets;
@@ -20,16 +18,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * VUE - Dashboard administrateur avec gestion des commandes
+ * VUE - Dashboard administrateur avec gestion des comptes et commandes
  */
 public class AdminView {
     private Stage stage;
+    private TabPane tabPane;
+
+    // Onglet Comptes
+    private ListView<HBox> pendingUsersListView;
+    private Label pendingUsersCountLabel;
+
+    // Onglet Commandes
     private ListView<HBox> pendingOrdersListView;
     private ListView<String> historyListView;
     private Label totalSalesLabel;
     private Label ordersCountLabel;
     private Label popularDishLabel;
-    private Label pendingCountLabel;
+    private Label pendingOrdersCountLabel;
 
     public AdminView(Stage stage) {
         this.stage = stage;
@@ -41,7 +46,7 @@ public class AdminView {
         root.setStyle("-fx-background-color: #f5f5f5;");
 
         root.setTop(createHeader());
-        root.setCenter(createMainContent());
+        root.setCenter(createTabContent());
 
         Scene scene = new Scene(root, 1400, 750);
         stage.setTitle("Dashboard Administrateur");
@@ -50,6 +55,7 @@ public class AdminView {
 
         loadStatistics();
         loadOrders();
+        loadPendingUsers();
     }
 
     private VBox createHeader() {
@@ -77,7 +83,7 @@ public class AdminView {
         Region spacer2 = new Region();
         HBox.setHgrow(spacer2, Priority.ALWAYS);
 
-        Label emailLabel = new Label("📧 " + UserSession.getInstance().getCurrentAdminEmail());
+        Label emailLabel = new Label("📧 " + UserSession.getInstance().getCurrentEmail());
         emailLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
         emailLabel.setTextFill(Color.web("#ecf0f1"));
 
@@ -88,6 +94,7 @@ public class AdminView {
         refreshButton.setOnAction(e -> {
             loadStatistics();
             loadOrders();
+            loadPendingUsers();
         });
 
         Button logoutButton = new Button("🚪 Déconnexion");
@@ -102,17 +109,79 @@ public class AdminView {
         return header;
     }
 
-    private HBox createMainContent() {
-        HBox mainContent = new HBox(15);
-        mainContent.setPadding(new Insets(15));
+    private TabPane createTabContent() {
+        tabPane = new TabPane();
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        mainContent.getChildren().addAll(
+        // Onglet 1: Gestion des comptes
+        Tab usersTab = new Tab("👥 Gestion des Comptes");
+        usersTab.setContent(createUsersManagementContent());
+
+        // Onglet 2: Gestion des commandes
+        Tab ordersTab = new Tab("📦 Gestion des Commandes");
+        ordersTab.setContent(createOrdersManagementContent());
+
+        tabPane.getTabs().addAll(usersTab, ordersTab);
+
+        return tabPane;
+    }
+
+    // ONGLET 1: GESTION DES COMPTES
+    private HBox createUsersManagementContent() {
+        HBox content = new HBox(20);
+        content.setPadding(new Insets(15));
+
+        // Statistiques
+        VBox statsPanel = new VBox(15);
+        statsPanel.setPrefWidth(250);
+        statsPanel.setPadding(new Insets(20));
+        statsPanel.setStyle("-fx-background-color: white; " +
+                "-fx-background-radius: 10; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+
+        Label statsTitle = new Label("📊 STATISTIQUES");
+        statsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        statsTitle.setTextFill(Color.web("#2c3e50"));
+
+        VBox pendingBox = createStatBox("⏳ En Attente", "0", "#F7931E");
+        pendingUsersCountLabel = (Label) ((VBox) pendingBox.getChildren().get(1)).getChildren().get(0);
+
+        statsPanel.getChildren().addAll(statsTitle, pendingBox);
+
+        // Panel des demandes
+        VBox requestsPanel = new VBox(15);
+        requestsPanel.setPrefWidth(1050);
+        requestsPanel.setPadding(new Insets(20));
+        requestsPanel.setStyle("-fx-background-color: white; " +
+                "-fx-background-radius: 10; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+
+        Label requestsTitle = new Label("⏳ DEMANDES D'INSCRIPTION EN ATTENTE");
+        requestsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        requestsTitle.setTextFill(Color.web("#F7931E"));
+
+        pendingUsersListView = new ListView<>();
+        pendingUsersListView.setPrefHeight(580);
+        pendingUsersListView.setStyle("-fx-font-size: 12px;");
+
+        requestsPanel.getChildren().addAll(requestsTitle, pendingUsersListView);
+
+        content.getChildren().addAll(statsPanel, requestsPanel);
+        return content;
+    }
+
+    // ONGLET 2: GESTION DES COMMANDES
+    private HBox createOrdersManagementContent() {
+        HBox content = new HBox(15);
+        content.setPadding(new Insets(15));
+
+        content.getChildren().addAll(
                 createStatisticsPanel(),
                 createPendingOrdersPanel(),
                 createHistoryPanel()
         );
 
-        return mainContent;
+        return content;
     }
 
     private VBox createStatisticsPanel() {
@@ -127,23 +196,59 @@ public class AdminView {
         title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         title.setTextFill(Color.web("#2c3e50"));
 
-        // En attente
         VBox pendingBox = createStatBox("⏳ En Attente", "0", "#F7931E");
-        pendingCountLabel = (Label) ((VBox) pendingBox.getChildren().get(1)).getChildren().get(0);
+        pendingOrdersCountLabel = (Label) ((VBox) pendingBox.getChildren().get(1)).getChildren().get(0);
 
-        // Total ventes
         VBox salesBox = createStatBox("💰 Total Ventes", "0.00 DA", "#27ae60");
         totalSalesLabel = (Label) ((VBox) salesBox.getChildren().get(1)).getChildren().get(0);
 
-        // Nombre commandes
         VBox ordersBox = createStatBox("📦 Commandes", "0", "#3498db");
         ordersCountLabel = (Label) ((VBox) ordersBox.getChildren().get(1)).getChildren().get(0);
 
-        // Plat populaire
         VBox dishBox = createStatBox("🏆 Plus Populaire", "Aucun", "#e74c3c");
         popularDishLabel = (Label) ((VBox) dishBox.getChildren().get(1)).getChildren().get(0);
 
         panel.getChildren().addAll(title, pendingBox, salesBox, ordersBox, dishBox);
+        return panel;
+    }
+
+    private VBox createPendingOrdersPanel() {
+        VBox panel = new VBox(15);
+        panel.setPrefWidth(520);
+        panel.setPadding(new Insets(20));
+        panel.setStyle("-fx-background-color: white; " +
+                "-fx-background-radius: 10; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+
+        Label title = new Label("⏳ COMMANDES EN ATTENTE");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        title.setTextFill(Color.web("#F7931E"));
+
+        pendingOrdersListView = new ListView<>();
+        pendingOrdersListView.setPrefHeight(550);
+        pendingOrdersListView.setStyle("-fx-font-size: 12px;");
+
+        panel.getChildren().addAll(title, pendingOrdersListView);
+        return panel;
+    }
+
+    private VBox createHistoryPanel() {
+        VBox panel = new VBox(15);
+        panel.setPrefWidth(520);
+        panel.setPadding(new Insets(20));
+        panel.setStyle("-fx-background-color: white; " +
+                "-fx-background-radius: 10; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+
+        Label title = new Label("📚 HISTORIQUE COMPLET");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        title.setTextFill(Color.web("#2c3e50"));
+
+        historyListView = new ListView<>();
+        historyListView.setPrefHeight(550);
+        historyListView.setStyle("-fx-font-size: 11px; -fx-font-family: 'Courier New';");
+
+        panel.getChildren().addAll(title, historyListView);
         return panel;
     }
 
@@ -167,65 +272,117 @@ public class AdminView {
         return box;
     }
 
-    private VBox createPendingOrdersPanel() {
-        VBox panel = new VBox(15);
-        panel.setPrefWidth(520);
-        panel.setPadding(new Insets(20));
-        panel.setStyle("-fx-background-color: white; " +
-                "-fx-background-radius: 10; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+    // Charger les utilisateurs en attente
+    private void loadPendingUsers() {
+        UserManager userManager = UserManager.getInstance();
+        List<User> pendingUsers = userManager.getPendingUsers();
 
-        Label title = new Label("⏳ COMMANDES EN ATTENTE");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        title.setTextFill(Color.web("#F7931E"));
+        pendingUsersCountLabel.setText(String.valueOf(pendingUsers.size()));
 
-        pendingOrdersListView = new ListView<>();
-        pendingOrdersListView.setPrefHeight(600);
-        pendingOrdersListView.setStyle("-fx-font-size: 12px;");
+        pendingUsersListView.getItems().clear();
 
-        panel.getChildren().addAll(title, pendingOrdersListView);
-        return panel;
+        if (pendingUsers.isEmpty()) {
+            Label emptyLabel = new Label("Aucune demande en attente");
+            emptyLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-style: italic;");
+            HBox emptyBox = new HBox(emptyLabel);
+            emptyBox.setAlignment(Pos.CENTER);
+            emptyBox.setPadding(new Insets(20));
+            pendingUsersListView.getItems().add(emptyBox);
+        } else {
+            for (User user : pendingUsers) {
+                pendingUsersListView.getItems().add(createPendingUserBox(user));
+            }
+        }
     }
 
-    private VBox createHistoryPanel() {
-        VBox panel = new VBox(15);
-        panel.setPrefWidth(520);
-        panel.setPadding(new Insets(20));
-        panel.setStyle("-fx-background-color: white; " +
-                "-fx-background-radius: 10; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+    private HBox createPendingUserBox(User user) {
+        VBox userInfo = new VBox(8);
+        userInfo.setPadding(new Insets(12));
+        userInfo.setStyle("-fx-background-color: #fff8dc; " +
+                "-fx-background-radius: 8; " +
+                "-fx-border-color: #F7931E; " +
+                "-fx-border-width: 2; " +
+                "-fx-border-radius: 8;");
 
-        Label title = new Label("📚 HISTORIQUE COMPLET");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        title.setTextFill(Color.web("#2c3e50"));
+        Label headerLabel = new Label("⏳ " + user.getRoleDisplay() + " - " + user.getEmail());
+        headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        headerLabel.setTextFill(Color.web("#F7931E"));
 
-        historyListView = new ListView<>();
-        historyListView.setPrefHeight(600);
-        historyListView.setStyle("-fx-font-size: 11px; -fx-font-family: 'Courier New';");
+        Label statusLabel = new Label(user.getStatusDisplay());
+        statusLabel.setFont(Font.font("Arial", 11));
+        statusLabel.setTextFill(Color.web("#7f8c8d"));
 
-        panel.getChildren().addAll(title, historyListView);
-        return panel;
+        HBox buttonsBox = new HBox(10);
+        buttonsBox.setAlignment(Pos.CENTER);
+        buttonsBox.setPadding(new Insets(5, 0, 0, 0));
+
+        Button approveButton = new Button("✅ Approuver");
+        approveButton.setStyle("-fx-font-size: 11px; -fx-background-color: #27ae60; " +
+                "-fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;");
+        approveButton.setPrefWidth(140);
+        approveButton.setOnAction(e -> handleApproveUser(user));
+
+        Button rejectButton = new Button("❌ Rejeter");
+        rejectButton.setStyle("-fx-font-size: 11px; -fx-background-color: #e74c3c; " +
+                "-fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;");
+        rejectButton.setPrefWidth(140);
+        rejectButton.setOnAction(e -> handleRejectUser(user));
+
+        buttonsBox.getChildren().addAll(approveButton, rejectButton);
+
+        userInfo.getChildren().addAll(headerLabel, statusLabel, buttonsBox);
+
+        HBox container = new HBox(userInfo);
+        container.setPadding(new Insets(5));
+        HBox.setHgrow(userInfo, Priority.ALWAYS);
+        return container;
+    }
+
+    private void handleApproveUser(User user) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Approuver le compte");
+        confirm.setHeaderText(user.getRoleDisplay() + " - " + user.getEmail());
+        confirm.setContentText("Voulez-vous approuver ce compte ?");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                UserManager.getInstance().approveUser(user.getEmail());
+                loadPendingUsers();
+                showSuccessAlert("Compte approuvé avec succès !");
+            }
+        });
+    }
+
+    private void handleRejectUser(User user) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Rejeter le compte");
+        confirm.setHeaderText(user.getRoleDisplay() + " - " + user.getEmail());
+        confirm.setContentText("Voulez-vous rejeter ce compte ?");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                UserManager.getInstance().rejectUser(user.getEmail());
+                loadPendingUsers();
+                showSuccessAlert("Compte rejeté.");
+            }
+        });
     }
 
     private void loadStatistics() {
         RestaurantSystem system = RestaurantSystem.getInstance();
         List<Order> orders = system.getOrders();
 
-        // Compter en attente
         long pendingCount = orders.stream().filter(Order::isPending).count();
 
-        // Calculer total ventes
         double totalSales = orders.stream()
                 .filter(Order::isPaid)
                 .mapToDouble(Order::getTotal)
                 .sum();
 
-        // Nombre de commandes
         int ordersCount = (int) orders.stream()
                 .filter(Order::isPaid)
                 .count();
 
-        // Plat le plus populaire
         Map<String, Integer> dishCount = new HashMap<>();
         for (Order order : orders) {
             if (order.isPaid()) {
@@ -245,8 +402,7 @@ public class AdminView {
             }
         }
 
-        // Mettre à jour les labels
-        pendingCountLabel.setText(String.valueOf(pendingCount));
+        pendingOrdersCountLabel.setText(String.valueOf(pendingCount));
         totalSalesLabel.setText(String.format("%.0f DA", totalSales));
         ordersCountLabel.setText(String.valueOf(ordersCount));
         popularDishLabel.setText(popularDish);
@@ -256,7 +412,6 @@ public class AdminView {
         RestaurantSystem system = RestaurantSystem.getInstance();
         List<Order> allOrders = system.getOrders();
 
-        // Commandes en attente
         List<Order> pendingOrders = allOrders.stream()
                 .filter(Order::isPending)
                 .collect(Collectors.toList());
@@ -276,7 +431,6 @@ public class AdminView {
             }
         }
 
-        // Historique complet
         historyListView.getItems().clear();
 
         if (allOrders.isEmpty()) {
@@ -300,12 +454,10 @@ public class AdminView {
                 "-fx-border-width: 2; " +
                 "-fx-border-radius: 8;");
 
-        // Header
         Label headerLabel = new Label("⏳ Commande #" + order.getOrderId() + " | " + order.getFormattedTime());
         headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
         headerLabel.setTextFill(Color.web("#F7931E"));
 
-        // Items
         VBox itemsBox = new VBox(3);
         for (OrderItem item : order.getItems()) {
             Label itemLabel = new Label("  • " + item.getQuantity() + "x " +
@@ -315,19 +467,16 @@ public class AdminView {
             itemsBox.getChildren().add(itemLabel);
         }
 
-        // Total et paiement
         String paymentInfo = order.isOnsitePayment() ? "[À PAYER SUR PLACE]" : "[PAYÉ]";
         Label totalLabel = new Label("TOTAL: " + order.getTotal() + " DA " + paymentInfo);
         totalLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         totalLabel.setTextFill(Color.web("#2c3e50"));
 
-        // Boutons d'action selon le type de paiement
         HBox buttonsBox = new HBox(10);
         buttonsBox.setAlignment(Pos.CENTER);
         buttonsBox.setPadding(new Insets(5, 0, 0, 0));
 
         if (order.isOnsitePayment()) {
-            // SUR PLACE : Seulement bouton VALIDER
             Button validateButton = new Button("✅ Valider (prêt à récupérer)");
             validateButton.setStyle("-fx-font-size: 11px; -fx-background-color: #27ae60; " +
                     "-fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;");
@@ -335,7 +484,6 @@ public class AdminView {
             validateButton.setOnAction(e -> handleValidateOrder(order));
             buttonsBox.getChildren().add(validateButton);
         } else {
-            // ESPÈCES ou CARTE : Seulement bouton LIVRAISON
             Button deliverButton = new Button("🚚 Assigner à la Livraison");
             deliverButton.setStyle("-fx-font-size: 11px; -fx-background-color: #3498db; " +
                     "-fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;");
@@ -354,7 +502,6 @@ public class AdminView {
     private String formatHistoryOrder(Order order) {
         StringBuilder sb = new StringBuilder();
 
-        // Status avec couleur
         String statusIcon = "";
         switch (order.getStatus()) {
             case PENDING: statusIcon = "⏳"; break;
@@ -397,9 +544,7 @@ public class AdminView {
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 order.validate();
-                // Sauvegarder les changements
                 OrdersManager.getInstance().saveOrders(RestaurantSystem.getInstance().getOrders());
-                // Rafraîchir l'affichage
                 loadStatistics();
                 loadOrders();
                 showSuccessAlert("Commande #" + order.getOrderId() + " validée avec succès !");
@@ -416,9 +561,7 @@ public class AdminView {
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 order.assignDelivery();
-                // Sauvegarder les changements
                 OrdersManager.getInstance().saveOrders(RestaurantSystem.getInstance().getOrders());
-                // Rafraîchir l'affichage
                 loadStatistics();
                 loadOrders();
                 showSuccessAlert("Commande #" + order.getOrderId() + " assignée à la livraison !");
@@ -434,7 +577,6 @@ public class AdminView {
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                // NE PAS déconnecter - juste retourner
                 new WelcomeView(stage).show();
             }
         });

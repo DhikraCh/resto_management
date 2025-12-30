@@ -1,6 +1,7 @@
 package com.restaurant.view;
 
-import com.restaurant.model.AdminManager;
+import com.restaurant.model.User;
+import com.restaurant.model.UserManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -12,13 +13,14 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 /**
- * VUE - Inscription administrateur
+ * VUE - Inscription avec sélection de rôle
  */
 public class RegisterView {
     private Stage stage;
     private TextField emailField;
     private PasswordField passwordField;
     private PasswordField confirmPasswordField;
+    private ComboBox<String> roleCombo;
 
     public RegisterView(Stage stage) {
         this.stage = stage;
@@ -30,7 +32,6 @@ public class RegisterView {
         root.setPadding(new Insets(40));
         root.setStyle("-fx-background-color: linear-gradient(to bottom, #FF6B35, #F7931E);");
 
-        // Container principal
         VBox formBox = new VBox(20);
         formBox.setAlignment(Pos.CENTER);
         formBox.setPadding(new Insets(40));
@@ -39,10 +40,26 @@ public class RegisterView {
                 "-fx-background-radius: 15; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 20, 0, 0, 5);");
 
-        // Titre
-        Label title = new Label("📝 CRÉER UN COMPTE ADMIN");
+        Label title = new Label("📝 CRÉER UN COMPTE");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         title.setTextFill(Color.web("#2c3e50"));
+
+        // Rôle
+        VBox roleBox = new VBox(8);
+        Label roleLabel = new Label("Type de compte");
+        roleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        roleCombo = new ComboBox<>();
+        roleCombo.getItems().addAll("👤 Client", "🚚 Livreur", "👨‍💼 Admin");
+        roleCombo.setValue("👤 Client");
+        roleCombo.setPrefHeight(40);
+        roleCombo.setStyle("-fx-font-size: 14px; -fx-background-radius: 5;");
+        roleBox.getChildren().addAll(roleLabel, roleCombo);
+
+        // Info rôle
+        Label roleInfo = new Label("ℹ️ Clients : accès immédiat\nLivreurs et Admins : validation requise");
+        roleInfo.setFont(Font.font("Arial", FontWeight.NORMAL, 11));
+        roleInfo.setTextFill(Color.web("#7f8c8d"));
+        roleInfo.setStyle("-fx-background-color: #ecf0f1; -fx-padding: 8; -fx-background-radius: 5;");
 
         // Email
         VBox emailBox = new VBox(8);
@@ -96,24 +113,20 @@ public class RegisterView {
 
         buttonsBox.getChildren().addAll(backButton, registerButton);
 
-        // Info
-        Label infoLabel = new Label("⚠️ Conservez bien vos identifiants");
-        infoLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 11));
-        infoLabel.setTextFill(Color.web("#e74c3c"));
-
         formBox.getChildren().addAll(
                 title,
+                roleBox,
+                roleInfo,
                 emailBox,
                 passwordBox,
                 confirmBox,
-                buttonsBox,
-                infoLabel
+                buttonsBox
         );
 
         root.getChildren().add(formBox);
 
-        Scene scene = new Scene(root, 800, 600);
-        stage.setTitle("Inscription Administrateur");
+        Scene scene = new Scene(root, 800, 650);
+        stage.setTitle("Inscription");
         stage.setScene(scene);
         stage.show();
     }
@@ -122,6 +135,7 @@ public class RegisterView {
         String email = emailField.getText().trim();
         String password = passwordField.getText();
         String confirmPassword = confirmPasswordField.getText();
+        String roleStr = roleCombo.getValue();
 
         // Validations
         if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
@@ -129,7 +143,7 @@ public class RegisterView {
             return;
         }
 
-        if (!AdminManager.isValidEmail(email)) {
+        if (!UserManager.isValidEmail(email)) {
             showAlert("Erreur", "Format d'email invalide\nUtilisez: exemple@gmail.com", Alert.AlertType.ERROR);
             return;
         }
@@ -144,16 +158,35 @@ public class RegisterView {
             return;
         }
 
-        // Enregistrement
-        AdminManager adminManager = AdminManager.getInstance();
+        // Déterminer le rôle
+        User.UserRole role;
+        if (roleStr.contains("Client")) {
+            role = User.UserRole.CLIENT;
+        } else if (roleStr.contains("Livreur")) {
+            role = User.UserRole.LIVREUR;
+        } else {
+            role = User.UserRole.ADMIN;
+        }
 
-        if (adminManager.emailExists(email)) {
+        // Enregistrement
+        UserManager userManager = UserManager.getInstance();
+
+        if (userManager.emailExists(email)) {
             showAlert("Erreur", "Cet email est déjà enregistré", Alert.AlertType.ERROR);
             return;
         }
 
-        if (adminManager.registerAdmin(email, password)) {
-            showAlert("Succès", "Compte créé avec succès !\nVous pouvez maintenant vous connecter", Alert.AlertType.INFORMATION);
+        if (userManager.registerUser(email, password, role)) {
+            if (role == User.UserRole.CLIENT) {
+                showAlert("Succès",
+                        "Compte client créé avec succès !\nVous pouvez maintenant vous connecter.",
+                        Alert.AlertType.INFORMATION);
+            } else {
+                showAlert("Demande envoyée",
+                        "Votre demande de compte " + roleStr + " a été envoyée.\n" +
+                                "Un administrateur doit l'approuver avant que vous puissiez vous connecter.",
+                        Alert.AlertType.INFORMATION);
+            }
             new LoginView(stage).show();
         } else {
             showAlert("Erreur", "Erreur lors de la création du compte", Alert.AlertType.ERROR);

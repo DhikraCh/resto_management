@@ -1,18 +1,21 @@
 package com.restaurant.model;
 
+import com.restaurant.model.order.Order;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * PATRON SINGLETON - Session utilisateur
- * Garde en mémoire l'utilisateur actuellement connecté
+ * PATRON SINGLETON - Session utilisateur avec support multi-rôles
  */
 public class UserSession {
     private static UserSession instance;
 
-    private String currentAdminEmail;
-    private boolean isAdmin;
+    private User currentUser;
+    private List<Order> userOrderHistory; // Historique pour les clients connectés
 
     private UserSession() {
-        this.currentAdminEmail = null;
-        this.isAdmin = false;
+        this.currentUser = null;
+        this.userOrderHistory = new ArrayList<>();
     }
 
     public static UserSession getInstance() {
@@ -26,37 +29,86 @@ public class UserSession {
         return instance;
     }
 
-    // Connexion admin
-    public void loginAsAdmin(String email) {
-        this.currentAdminEmail = email;
-        this.isAdmin = true;
-        System.out.println("📝 Session admin démarrée: " + email);
+    // Connexion avec User
+    public void login(User user) {
+        this.currentUser = user;
+        this.userOrderHistory = new ArrayList<>();
+        System.out.println("🔐 Session démarrée: " + user.getEmail() + " (" + user.getRoleDisplay() + ")");
     }
 
-    // Connexion invité
+    // Connexion invité (comme avant)
     public void loginAsGuest() {
-        this.currentAdminEmail = null;
-        this.isAdmin = false;
-        System.out.println("📝 Session invité démarrée");
+        this.currentUser = null;
+        this.userOrderHistory = new ArrayList<>();
+        System.out.println("🔐 Session invité démarrée");
+    }
+
+    // Connexion admin (compatibilité avec ancien code)
+    @Deprecated
+    public void loginAsAdmin(String email) {
+        User admin = new User(email, "", User.UserRole.ADMIN, User.UserStatus.APPROVED);
+        login(admin);
     }
 
     // Déconnexion
     public void logout() {
-        System.out.println("👋 Déconnexion: " + (isAdmin ? currentAdminEmail : "Invité"));
-        this.currentAdminEmail = null;
-        this.isAdmin = false;
+        if (currentUser != null) {
+            System.out.println("👋 Déconnexion: " + currentUser.getEmail());
+        } else {
+            System.out.println("👋 Déconnexion: Invité");
+        }
+        this.currentUser = null;
+        this.userOrderHistory.clear();
+    }
+
+    // Ajouter une commande à l'historique de l'utilisateur
+    public void addOrderToHistory(Order order) {
+        if (currentUser != null && currentUser.isClient()) {
+            userOrderHistory.add(order);
+        }
+    }
+
+    // Obtenir l'historique de l'utilisateur
+    public List<Order> getUserOrderHistory() {
+        return new ArrayList<>(userOrderHistory);
     }
 
     // Getters
-    public boolean isAdmin() {
-        return isAdmin;
-    }
-
-    public String getCurrentAdminEmail() {
-        return currentAdminEmail;
-    }
-
     public boolean isLoggedIn() {
-        return isAdmin || currentAdminEmail == null;
+        return currentUser != null;
+    }
+
+    public boolean isGuest() {
+        return currentUser == null;
+    }
+
+    public boolean isAdmin() {
+        return currentUser != null && currentUser.isAdmin();
+    }
+
+    public boolean isLivreur() {
+        return currentUser != null && currentUser.isLivreur();
+    }
+
+    public boolean isClient() {
+        return currentUser != null && currentUser.isClient();
+    }
+
+    public User getCurrentUser() {
+        return currentUser;
+    }
+
+    public String getCurrentEmail() {
+        return currentUser != null ? currentUser.getEmail() : null;
+    }
+
+    // Compatibilité avec ancien code
+    @Deprecated
+    public String getCurrentAdminEmail() {
+        return getCurrentEmail();
+    }
+
+    public User.UserRole getCurrentRole() {
+        return currentUser != null ? currentUser.getRole() : null;
     }
 }

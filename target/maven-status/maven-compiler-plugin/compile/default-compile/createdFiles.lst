@@ -1,3 +1,4 @@
+com\restaurant\model\User$UserStatus.class
 com\restaurant\RestaurantApp.class
 com\restaurant\model\OrdersManager.class
 com\restaurant\model\menu\MenuComponent.class
@@ -5,15 +6,18 @@ com\restaurant\view\LoginView.class
 com\restaurant\model\payment\PaymentStrategy.class
 com\restaurant\model\UserSession.class
 com\restaurant\view\AdminView.class
+com\restaurant\model\User$UserRole.class
 com\restaurant\model\menu\MenuIt.class
 com\restaurant\model\AdminManager.class
 com\restaurant\model\payment\OnsitePaymentStrategy.class
 com\restaurant\model\RestaurantSystem.class
 com\restaurant\controller\RestaurantController.class
+com\restaurant\model\UserManager.class
 com\restaurant\model\order\Order.class
 com\restaurant\model\notification\OrderSubject.class
 com\restaurant\model\payment\CardPaymentStrategy.class
 com\restaurant\view\RestaurantView.class
+com\restaurant\view\LoginView$1.class
 com\restaurant\model\payment\CashPaymentStrategy.class
 com\restaurant\view\RegisterView.class
 com\restaurant\view\WelcomeView.class
@@ -23,4 +27,6 @@ com\restaurant\model\menu\MenuCategory.class
 com\restaurant\model\order\Order$OrderStatus.class
 com\restaurant\model\order\OrderItem.class
 com\restaurant\model\notification\KitchenObserver.class
+com\restaurant\view\LivreurView.class
 com\restaurant\view\AdminView$1.class
+com\restaurant\model\User.class
