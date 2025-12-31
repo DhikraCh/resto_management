@@ -249,12 +249,15 @@ public class LivreurView {
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                // Marquer comme terminée (nouveau status)
-                order.setStatus(Order.OrderStatus.PENDING); // On le remet en PENDING pour le retirer de DELIVERED
+                // Marquer comme terminée
+                order.setStatus(Order.OrderStatus.VALIDATED);
 
-                // Notifier l'admin via console (tu peux améliorer avec vraie notification)
+                // Enregistrer notification pour admin
                 String livreurEmail = UserSession.getInstance().getCurrentEmail();
-                System.out.println("🔔 NOTIFICATION ADMIN: " + livreurEmail +
+                com.restaurant.model.DeliveryNotificationManager.getInstance()
+                        .addNotification(livreurEmail, order.getOrderId());
+
+                System.out.println("🔔 NOTIFICATION: " + livreurEmail +
                         " a livré la commande #" + order.getOrderId());
 
                 // Sauvegarder
@@ -262,7 +265,7 @@ public class LivreurView {
 
                 showSuccessAlert("Commande #" + order.getOrderId() + " marquée comme livrée !\n" +
                         "Les admins ont été notifiés.");
-                loadOrders(); // Rafraîchir pour faire disparaître
+                loadOrders();
             }
         });
     }

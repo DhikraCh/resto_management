@@ -87,15 +87,11 @@ public class AdminView {
         emailLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
         emailLabel.setTextFill(Color.web("#ecf0f1"));
 
-        Button refreshButton = new Button("🔄 Actualiser");
-        refreshButton.setStyle("-fx-font-size: 13px; " +
+        Button notificationsButton = new Button("🔔 Notifications");
+        notificationsButton.setStyle("-fx-font-size: 13px; " +
                 "-fx-background-color: #F7931E; -fx-text-fill: white; " +
                 "-fx-background-radius: 5; -fx-cursor: hand;");
-        refreshButton.setOnAction(e -> {
-            loadStatistics();
-            loadOrders();
-            loadPendingUsers();
-        });
+        notificationsButton.setOnAction(e -> showNotifications());
 
         Button logoutButton = new Button("🚪 Déconnexion");
         logoutButton.setStyle("-fx-font-size: 13px; " +
@@ -103,7 +99,7 @@ public class AdminView {
                 "-fx-background-radius: 5; -fx-cursor: hand;");
         logoutButton.setOnAction(e -> logout());
 
-        titleBox.getChildren().addAll(backButton, spacer1, title, spacer2, emailLabel, refreshButton, logoutButton);
+        titleBox.getChildren().addAll(backButton, spacer1, title, spacer2, emailLabel, notificationsButton, logoutButton);
         header.getChildren().add(titleBox);
 
         return header;
@@ -567,6 +563,26 @@ public class AdminView {
                 showSuccessAlert("Commande #" + order.getOrderId() + " assignée à la livraison !");
             }
         });
+    }
+
+    private void showNotifications() {
+        List<String> notifications = com.restaurant.model.DeliveryNotificationManager.getInstance().getNotifications();
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Notifications de Livraison");
+        alert.setHeaderText("📬 Historique des livraisons");
+
+        if (notifications.isEmpty()) {
+            alert.setContentText("Aucune notification pour le moment.");
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (String notif : notifications) {
+                sb.append(notif).append("\n");
+            }
+            alert.setContentText(sb.toString());
+        }
+
+        alert.showAndWait();
     }
 
     private void handleBackToWelcome() {

@@ -5,6 +5,7 @@ com\restaurant\model\menu\MenuComponent.class
 com\restaurant\view\LoginView.class
 com\restaurant\model\payment\PaymentStrategy.class
 com\restaurant\model\UserSession.class
+com\restaurant\model\DeliveryNotificationManager.class
 com\restaurant\view\AdminView.class
 com\restaurant\model\User$UserRole.class
 com\restaurant\model\menu\MenuIt.class
