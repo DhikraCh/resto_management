@@ -52,7 +52,7 @@ public class WelcomeView {
         boolean isAdminConnected = com.restaurant.model.UserSession.getInstance().isAdmin();
 
         // Bouton Admin
-        Button adminButton = new Button("👨‍💼 ESPACE ADMINISTRATEUR");
+        Button adminButton = new Button("Connexion | Inscription");
         adminButton.setPrefWidth(350);
         adminButton.setPrefHeight(60);
         adminButton.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; " +
